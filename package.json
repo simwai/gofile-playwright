@@ -1,0 +1,19 @@
+{
+  "name": "gofile-playwright",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "gofile:upload": "tsx src/cli/upload.ts",
+    "gofile:verify": "tsx src/verify.ts",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "playwright": "^1.44.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "husky": "^9.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.0"
+  }
+}
