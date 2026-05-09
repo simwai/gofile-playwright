@@ -1,56 +1,16 @@
 /**
- * Verifies gofile assets using plain HTTP fetch + HTML string search.
+ * Orchestrates verification, re-upload of dead assets, and reporting.
  * No Playwright — fast enough for pre-commit.
- * Dead assets are automatically re-uploaded if filePath is resolvable.
  */
 import { existsSync } from 'fs'
 import { loadAssets } from './store.js'
+import { verifyAsset } from './verifier.js'
 import { uploadToGofile } from './upload.js'
-import type { GofileAsset } from './types.js'
+import type { ReuploadOutcome, VerifyResult } from './types.js'
 
-interface VerifyResult {
-  asset: GofileAsset
-  isAlive: boolean
-  reason?: string
-}
-
-async function verifyAsset(asset: GofileAsset): Promise<VerifyResult> {
-  let html: string
-  try {
-    const res = await fetch(`https://gofile.io/d/${asset.hash}`, {
-      headers: { 'User-Agent': 'gofile-verify/1.0' },
-      signal: AbortSignal.timeout(10_000),
-    })
-
-    if (res.status === 404) {
-      return { asset, isAlive: false, reason: 'Folder not found (404)' }
-    }
-    if (!res.ok) {
-      return { asset, isAlive: false, reason: `HTTP ${res.status}` }
-    }
-
-    html = await res.text()
-  } catch (err) {
-    return { asset, isAlive: false, reason: `Fetch failed: ${String(err)}` }
-  }
-
-  if (!html.includes(asset.name)) {
-    return {
-      asset,
-      isAlive: false,
-      reason: `Filename "${asset.name}" not found in page HTML — asset may have been deleted`,
-    }
-  }
-
-  return { asset, isAlive: true }
-}
-
-async function tryReupload(asset: GofileAsset): Promise<'reuploaded' | 'missing-file'> {
-  if (!existsSync(asset.filePath)) {
-    return 'missing-file'
-  }
-  // uploadToGofile handles the dead-asset case internally and overwrites the store
-  await uploadToGofile(asset.filePath)
+async function reuploadDead(result: VerifyResult): Promise<ReuploadOutcome> {
+  if (!existsSync(result.asset.filePath)) return 'missing-file'
+  await uploadToGofile(result.asset.filePath)
   return 'reuploaded'
 }
 
@@ -80,12 +40,12 @@ export async function verifyAllAssets(): Promise<boolean> {
   console.log(`\n⚠️  ${dead.length} dead asset(s) — attempting re-upload...\n`)
 
   let reuploadFailed = false
-  for (const { asset } of dead) {
-    const outcome = await tryReupload(asset)
+  for (const result of dead) {
+    const outcome = await reuploadDead(result)
     if (outcome === 'reuploaded') {
-      console.log(`✅  Re-uploaded "${asset.name}" — store updated.`)
+      console.log(`✅  Re-uploaded "${result.asset.name}" — store updated.`)
     } else {
-      console.error(`🚨  "${asset.name}" is dead and source file not found at: ${asset.filePath}`)
+      console.error(`🚨  "${result.asset.name}" is dead and source file not found at: ${result.asset.filePath}`)
       console.error('    Remove it from .gofile-assets.json or restore the source file.')
       reuploadFailed = true
     }
@@ -94,6 +54,6 @@ export async function verifyAllAssets(): Promise<boolean> {
   return !reuploadFailed
 }
 
-// Entry point when run directly
+// CLI entry point — isolated at the bottom so imports don't trigger side effects
 const ok = await verifyAllAssets()
 process.exit(ok ? 0 : 1)
