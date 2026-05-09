@@ -1,6 +1,6 @@
 import { chromium } from 'playwright'
 import { basename, extname, resolve } from 'path'
-import { saveAsset } from './store.js'
+import { loadAssets, saveAsset } from './store.js'
 import type { GofileAsset } from './types.js'
 import type { Page } from 'playwright'
 
@@ -14,6 +14,20 @@ const MEDIA_SELECTORS: Record<string, string> = {
   '.webm': 'video[src*="gofile.io/download"]',
   '.mov':  'video[src*="gofile.io/download"]',
   '.pdf':  'iframe[src*="gofile.io/download"], embed[src*="gofile.io/download"]',
+}
+
+async function isAssetAlive(asset: GofileAsset): Promise<boolean> {
+  try {
+    const res = await fetch(`https://gofile.io/d/${asset.hash}`, {
+      headers: { 'User-Agent': 'gofile-verify/1.0' },
+      signal: AbortSignal.timeout(8_000),
+    })
+    if (!res.ok) return false
+    const html = await res.text()
+    return html.includes(asset.name)
+  } catch {
+    return false
+  }
 }
 
 async function waitForUploadSettled(page: Page, filePath: string): Promise<string> {
@@ -51,7 +65,7 @@ async function waitForUploadSettled(page: Page, filePath: string): Promise<strin
   return downloadUrl
 }
 
-export async function uploadToGofile(filePath: string): Promise<GofileAsset> {
+async function runUpload(filePath: string): Promise<GofileAsset> {
   const browser = await chromium.launch({ headless: true })
   const page = await browser.newPage()
 
@@ -86,4 +100,20 @@ export async function uploadToGofile(filePath: string): Promise<GofileAsset> {
   } finally {
     await browser.close()
   }
+}
+
+export async function uploadToGofile(filePath: string): Promise<GofileAsset> {
+  const ext = extname(filePath).toLowerCase()
+  const name = basename(filePath, ext)
+  const existing = (await loadAssets()).find((a) => a.name === name)
+
+  if (existing) {
+    if (await isAssetAlive(existing)) {
+      console.log(`⏭️  "${name}" already uploaded and alive — skipping.`)
+      return existing
+    }
+    console.log(`⚠️  "${name}" found in store but unreachable — re-uploading.`)
+  }
+
+  return runUpload(filePath)
 }
