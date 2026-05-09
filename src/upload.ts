@@ -92,6 +92,7 @@ async function runUpload(filePath: string): Promise<GofileAsset> {
       name,
       url: cdnUrl,
       hash,
+      filePath: resolve(filePath),
       uploadedAt: new Date().toISOString(),
     }
 
