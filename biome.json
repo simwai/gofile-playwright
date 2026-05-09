@@ -1,0 +1,107 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.11/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": [
+      "**/*.{js,ts,jsx,tsx,json,jsonc,yml,yaml,md}", "!**/node_modules", "!**/dist"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "asNeeded",
+      "trailingCommas": "all",
+      "arrowParentheses": "always"
+    }
+  },
+  "json": {
+    "formatter": {
+      "enabled": true,
+      "indentWidth": 2
+    },
+    "linter": {
+      "enabled": true
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true
+    }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "**/*.ts",
+        "**/*.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noBannedTypes": "off",
+            "noUselessConstructor": "off",
+            "useOptionalChain": "error"
+          },
+          "correctness": {
+            "noUndeclaredVariables": "off",
+            "noUnusedVariables": "off"
+          },
+          "style": {
+            "noYodaExpression": "error",
+            "useBlockStatements": "error",
+            "useCollapsedElseIf": "error",
+            "useConsistentTypeDefinitions": "error",
+            "useConst": "error",
+            "useNumericSeparators": "off"
+          },
+          "suspicious": {
+            "noAsyncPromiseExecutor": "error",
+            "noDoubleEquals": "warn",
+            "noEmptyBlockStatements": "warn",
+            "noVar": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "**/*.js"
+      ],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noUselessConstructor": "off"
+          },
+          "correctness": {
+            "noUndeclaredVariables": "off",
+            "noUnusedVariables": "error"
+          },
+          "style": {
+            "noYodaExpression": "error",
+            "useBlockStatements": "error",
+            "useCollapsedElseIf": "error",
+            "useConst": "error",
+            "useNumericSeparators": "off"
+          },
+          "suspicious": {
+            "noAsyncPromiseExecutor": "error",
+            "noDoubleEquals": "warn",
+            "noEmptyBlockStatements": "warn",
+            "noVar": "error"
+          }
+        }
+      }
+    }
+  ]
+}

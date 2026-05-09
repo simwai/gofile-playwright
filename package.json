@@ -1,0 +1,29 @@
+{
+  "name": "gofile-playwright",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "gofile:upload": "tsx src/cli/upload.ts",
+    "gofile:verify": "tsx src/verify.ts",
+    "format": "biome format --write .",
+    "lint": "biome lint --write .",
+    "check": "biome check --write .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,ts,json,jsonc,md}": [
+      "biome check --write --no-errors-on-unmatched"
+    ]
+  },
+  "dependencies": {
+    "playwright": "^1.44.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.11",
+    "@types/node": "^20.0.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.0"
+  }
+}
